@@ -3,6 +3,7 @@
 {% block title %}Your profile — Spendly{% endblock %}
 
 {% block content %}
+{% set empty_message = "No expenses in this date range." if filter_active else "No expenses yet." %}
 
 <section class="profile-section">
     <div class="profile-container">
@@ -15,6 +16,53 @@
                 <span class="profile-since-pill">Member since {{ member_since }}</span>
             </div>
         </header>
+
+        <form class="profile-filter" method="get" action="{{ url_for('profile') }}">
+            <div class="profile-filter-row">
+                <div class="profile-filter-field {% if active_preset == 'custom' %}profile-filter-range--active{% endif %}">
+                    <label class="profile-filter-label" for="profile-filter-from">From</label>
+                    <input
+                        id="profile-filter-from"
+                        class="form-input"
+                        type="date"
+                        name="from"
+                        value="{{ from_value }}"
+                        max="{{ to_value if to_value else '' }}"
+                    >
+                </div>
+                <div class="profile-filter-field {% if active_preset == 'custom' %}profile-filter-range--active{% endif %}">
+                    <label class="profile-filter-label" for="profile-filter-to">To</label>
+                    <input
+                        id="profile-filter-to"
+                        class="form-input"
+                        type="date"
+                        name="to"
+                        value="{{ to_value }}"
+                        min="{{ from_value if from_value else '' }}"
+                    >
+                </div>
+                <div class="profile-filter-actions">
+                    <button type="submit" class="btn-submit profile-filter-apply">Apply</button>
+                    {% if filter_active %}
+                        <a class="btn-ghost profile-filter-clear" href="{{ url_for('profile') }}">Clear</a>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="profile-filter-presets" role="group" aria-label="Date range presets">
+                {% for key, label in presets.items() %}
+                    <button
+                        type="submit"
+                        name="preset"
+                        value="{{ key }}"
+                        class="profile-filter-preset {% if active_preset == key %}profile-filter-preset--active{% endif %}"
+                        data-preset="{{ key }}"
+                    >{{ label }}</button>
+                {% endfor %}
+            </div>
+            {% if filter_error %}
+                <p class="profile-filter-error" role="alert">{{ filter_error }}</p>
+            {% endif %}
+        </form>
 
         <div class="profile-stats">
             <div class="stat-tile">
@@ -31,7 +79,7 @@
                     <i data-lucide="trophy" class="stat-tile-icon"></i>
                 </div>
                 <div class="stat-tile-value">
-                    {{ top_category if top_category else "No expenses yet." }}
+                    {{ top_category if top_category else empty_message }}
                 </div>
             </div>
         </div>
@@ -63,7 +111,7 @@
                 </tbody>
             </table>
             {% else %}
-            <p class="breakdown-empty">No expenses yet.</p>
+            <p class="breakdown-empty">{{ empty_message }}</p>
             {% endif %}
         </section>
 
@@ -93,7 +141,7 @@
                 </tbody>
             </table>
             {% else %}
-            <p class="breakdown-empty">No expenses yet.</p>
+            <p class="breakdown-empty">{{ empty_message }}</p>
             {% endif %}
         </section>
 
@@ -104,7 +152,7 @@
                 <canvas id="categoryPieChart"></canvas>
             </div>
             {% else %}
-            <p class="breakdown-empty">No expenses yet.</p>
+            <p class="breakdown-empty">{{ empty_message }}</p>
             {% endif %}
         </section>
 
@@ -139,6 +187,27 @@
     if (window.lucide && typeof window.lucide.createIcons === "function") {
         window.lucide.createIcons();
     }
+
+    // Preset-preview nicety: when the user clicks a preset button, fill
+    // the date inputs with the preset's window before the form submits.
+    // The form must still work without JS — this just gives visual
+    // feedback so the user sees what "Last 30 days" actually means.
+    (function () {
+        const form = document.querySelector(".profile-filter");
+        if (!form) return;
+        const fromInput = form.querySelector('input[name="from"]');
+        const toInput = form.querySelector('input[name="to"]');
+        const ranges = {{ preset_ranges|tojson }};
+        form.querySelectorAll("button[data-preset]").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const key = btn.getAttribute("data-preset");
+                const range = ranges[key];
+                if (!range || !fromInput || !toInput) return;
+                fromInput.value = range[0] || "";
+                toInput.value = range[1] || "";
+            });
+        });
+    })();
 
     // Pie chart for category share
     const categoryPieChart = document.getElementById('categoryPieChart');

@@ -1,6 +1,6 @@
 import sqlite3
 import sys
-from datetime import datetime
+from datetime import date, datetime, timedelta
 from functools import wraps
 
 from flask import Flask, redirect, render_template, request, session, url_for
@@ -165,9 +165,127 @@ def dashboard():
     return render_template("dashboard.html", user_name=session.get("user_name"))
 
 
+# ------------------------------------------------------------------ #
+# Profile filter helpers                                                #
+# ------------------------------------------------------------------ #
+
+# Preset → (label, range-builder). Returning None for both endpoints
+# means "no filter applied". `today` is passed in so the function stays
+# pure (easier to reason about and trivial to unit-test later).
+_PRESETS = {
+    "all":         "All time",
+    "this-month":  "This month",
+    "last-month":  "Last month",
+    "last-30-days": "Last 30 days",
+    "last-7-days": "Last 7 days",
+}
+
+
+def _resolve_preset(preset: str, today: date) -> tuple[date | None, date | None]:
+    """Expand a preset name to a (from, to) date pair.
+
+    Unknown / empty presets fall back to (None, None) — i.e. no filter.
+    """
+    if preset == "this-month":
+        return (today.replace(day=1), today)
+    if preset == "last-month":
+        first_this_month = today.replace(day=1)
+        last_prev_month = first_this_month - timedelta(days=1)
+        return (last_prev_month.replace(day=1), last_prev_month)
+    if preset == "last-30-days":
+        return (today - timedelta(days=29), today)
+    if preset == "last-7-days":
+        return (today - timedelta(days=6), today)
+    # "all" and anything unknown → unbounded
+    return (None, None)
+
+
+def _parse_iso_date(raw: str, errors: list[str], field: str) -> date | None:
+    """Parse a YYYY-MM-DD string. On ValueError, append to errors and return None.
+
+    Empty / whitespace strings return None without appending — those mean
+    "this side is unbounded", which is a valid state.
+    """
+    raw = (raw or "").strip()
+    if not raw:
+        return None
+    try:
+        return datetime.strptime(raw, "%Y-%m-%d").date()
+    except ValueError:
+        errors.append(f"{field}: '{raw}' is not a valid YYYY-MM-DD date.")
+        return None
+
+
+def _date_bounds(from_date: date | None, to_date: date | None) -> tuple[str, list[str]]:
+    """Build the `AND date ...` fragment + bound params for a WHERE clause.
+
+    SQLite text-comparison on ISO `YYYY-MM-DD` strings is correct, so
+    `>=` and `<=` work without any conversion.
+    """
+    clauses: list[str] = []
+    params: list[str] = []
+    if from_date is not None:
+        clauses.append("date >= ?")
+        params.append(from_date.isoformat())
+    if to_date is not None:
+        clauses.append("date <= ?")
+        params.append(to_date.isoformat())
+    return (" AND ".join(clauses), params)
+
+
+def _first_of_month(d: date) -> date:
+    return d.replace(day=1)
+
+
 @app.route("/profile")
 @_login_required
 def profile():
+    # ----- Parse & validate the date filter from the query string -----
+    # Preset shortcuts expand to a (from, to) pair; explicit from/to win
+    # over the preset so the "Apply" button doesn't need to clear it.
+    raw_preset = (request.args.get("preset") or "all").strip()
+    raw_from = (request.args.get("from") or "").strip()
+    raw_to = (request.args.get("to") or "").strip()
+
+    errors: list[str] = []
+    explicit_from = _parse_iso_date(raw_from, errors, "From")
+    explicit_to = _parse_iso_date(raw_to, errors, "To")
+
+    # Preset contributes defaults for whichever side the user left blank.
+    today = date.today()
+    preset_from, preset_to = _resolve_preset(raw_preset, today)
+
+    from_date = explicit_from if explicit_from is not None else preset_from
+    to_date = explicit_to if explicit_to is not None else preset_to
+
+    # Reversed-range guard. We catch this before running any queries so
+    # the user gets feedback and the page falls back to no filter.
+    if from_date is not None and to_date is not None and from_date > to_date:
+        from_date = None
+        to_date = None
+        errors.append("Start date must be on or before end date.")
+
+    filter_error = errors[0] if errors else None
+
+    # `active_preset` drives which pill is highlighted in the filter bar.
+    # "custom" means the user submitted explicit from/to — neither a
+    # preset button nor the empty state is highlighted; the date inputs
+    # carry the active-state hint instead.
+    if raw_from or raw_to:
+        active_preset = "custom"
+    elif raw_preset in _PRESETS and raw_preset != "all":
+        active_preset = raw_preset
+    else:
+        active_preset = "all"
+
+    # ----- Apply the bounds uniformly to every expenses query -----
+    bounds_sql, bounds_params = _date_bounds(from_date, to_date)
+    # Always AND with at least an empty string so the final SQL stays
+    # valid even when no bounds are set.
+    where_suffix = f" AND {bounds_sql}" if bounds_sql else ""
+    user_id = session["user_id"]
+    user_params = (user_id, *bounds_params)
+
     db = get_db()
     user = db.execute(
         "SELECT id, name, email, created_at FROM users WHERE id = ?",
@@ -175,26 +293,22 @@ def profile():
     ).fetchone()
 
     total_row = db.execute(
-        "SELECT COALESCE(SUM(amount), 0) AS total FROM expenses WHERE user_id = ?",
-        (session["user_id"],),
+        f"SELECT COALESCE(SUM(amount), 0) AS total FROM expenses "
+        f"WHERE user_id = ?{where_suffix}",
+        user_params,
     ).fetchone()
     total_spent = total_row["total"]
 
     tx_count = db.execute(
-        "SELECT COUNT(*) AS n FROM expenses WHERE user_id = ?",
-        (session["user_id"],),
+        f"SELECT COUNT(*) AS n FROM expenses WHERE user_id = ?{where_suffix}",
+        user_params,
     ).fetchone()["n"]
 
     top_row = db.execute(
-        """
-        SELECT category, SUM(amount) AS total
-        FROM expenses
-        WHERE user_id = ?
-        GROUP BY category
-        ORDER BY total DESC
-        LIMIT 1
-        """,
-        (session["user_id"],),
+        f"SELECT category, SUM(amount) AS total FROM expenses "
+        f"WHERE user_id = ?{where_suffix} "
+        f"GROUP BY category ORDER BY total DESC LIMIT 1",
+        user_params,
     ).fetchone()
     top_category = top_row["category"] if top_row else None
 
@@ -202,27 +316,20 @@ def profile():
     # the profile page. Same shape as the top-category query but without
     # LIMIT 1, so we can show every category the user has spent in.
     # Returns an empty list for a user with no expenses — the template
-    # renders the "No expenses yet." empty state in that case.
+    # renders the empty-state copy in that case.
     category_rows = db.execute(
-        """
-        SELECT category, SUM(amount) AS total
-        FROM expenses
-        WHERE user_id = ?
-        GROUP BY category
-        ORDER BY total DESC
-        """,
-        (session["user_id"],),
+        f"SELECT category, SUM(amount) AS total FROM expenses "
+        f"WHERE user_id = ?{where_suffix} "
+        f"GROUP BY category ORDER BY total DESC",
+        user_params,
     ).fetchall()
 
     # Individual expenses for the detailed table with descriptions
     expense_rows = db.execute(
-        """
-        SELECT id, amount, category, date, description
-        FROM expenses
-        WHERE user_id = ?
-        ORDER BY date DESC
-        """,
-        (session["user_id"],),
+        f"SELECT id, amount, category, date, description FROM expenses "
+        f"WHERE user_id = ?{where_suffix} "
+        f"ORDER BY date DESC",
+        user_params,
     ).fetchall()
 
     # Convert sqlite3.Row objects to dicts so they can be JSON-serialized
@@ -265,6 +372,24 @@ def profile():
         initials=initials,
         category_rows=category_rows,
         expense_rows=expense_rows,
+        active_preset=active_preset,
+        from_value=raw_from,
+        to_value=raw_to,
+        filter_error=filter_error,
+        filter_active=active_preset != "all",
+        presets=_PRESETS,
+        # Echoed back into the optional JS so the preset-preview nicety
+        # can populate the date inputs without a roundtrip.
+        preset_ranges={
+            "all":          (None, None),
+            "this-month":   (_first_of_month(today).isoformat(), today.isoformat()),
+            "last-month":   (
+                _first_of_month(_first_of_month(today) - timedelta(days=1)).isoformat(),
+                (_first_of_month(today) - timedelta(days=1)).isoformat(),
+            ),
+            "last-30-days": ((today - timedelta(days=29)).isoformat(), today.isoformat()),
+            "last-7-days":  ((today - timedelta(days=6)).isoformat(), today.isoformat()),
+        },
     )
 
 
