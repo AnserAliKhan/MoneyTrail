@@ -1,3 +1,4 @@
+import secrets
 import sqlite3
 import sys
 from datetime import date, datetime, timedelta
@@ -6,7 +7,8 @@ from functools import wraps
 from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from database.db import get_db, init_db, seed_db
+from database.db import CATEGORIES, get_db, init_db, seed_db
+from database.queries import insert_expense
 
 app = Flask(__name__)
 
@@ -163,6 +165,12 @@ def logout():
 @_login_required
 def dashboard():
     return render_template("dashboard.html", user_name=session.get("user_name"))
+
+
+@app.route("/analytics")
+@_login_required
+def analytics():
+    return render_template("analytics.html")
 
 
 # ------------------------------------------------------------------ #
@@ -393,9 +401,92 @@ def profile():
     )
 
 
-@app.route("/expenses/add")
+@app.route("/expenses/add", methods=["GET", "POST"])
+@_login_required
 def add_expense():
-    return "Add expense — coming in Step 7"
+    """Add a new expense - GET shows form, POST processes submission."""
+    if request.method == "POST":
+        # Validate CSRF token
+        submitted_token = request.form.get("csrf_token")
+        stored_token = session.get("csrf_token")
+        if not submitted_token or submitted_token != stored_token:
+            return "CSRF token validation failed", 403
+
+        # Get and validate form data
+        amount_raw = (request.form.get("amount") or "").strip()
+        category = (request.form.get("category") or "").strip()
+        date_raw = (request.form.get("date") or "").strip()
+        description = (request.form.get("description") or "").strip()
+
+        errors = []
+
+        # Validate amount - must be a positive number
+        try:
+            amount = float(amount_raw)
+            if amount <= 0:
+                errors.append("Amount must be greater than zero.")
+        except ValueError:
+            errors.append("Please enter a valid amount.")
+
+        # Validate category - must be from the fixed list
+        if not category:
+            errors.append("Please select a category.")
+        elif category not in CATEGORIES:
+            errors.append("Invalid category selected.")
+
+        # Validate date - must be valid YYYY-MM-DD
+        expense_date = None
+        if not date_raw:
+            errors.append("Please select a date.")
+        else:
+            try:
+                expense_date = datetime.strptime(date_raw, "%Y-%m-%d").date()
+            except ValueError:
+                errors.append("Please enter a valid date in YYYY-MM-DD format.")
+
+        # If there are errors, re-render the form
+        if errors:
+            return render_template(
+                "expenses/add.html",
+                error="; ".join(errors),
+                amount=amount_raw,
+                category=category,
+                date=date_raw,
+                description=description,
+                today=date.today().isoformat(),
+                categories=CATEGORIES,
+            )
+
+        # All valid - insert the expense with error handling
+        try:
+            insert_expense(
+                user_id=session["user_id"],
+                amount=amount,
+                category=category,
+                date=expense_date.isoformat(),
+                description=description,
+            )
+        except Exception:
+            return render_template(
+                "expenses/add.html",
+                error="Failed to save expense. Please try again.",
+                amount=amount_raw,
+                category=category,
+                date=date_raw,
+                description=description,
+                today=date.today().isoformat(),
+                categories=CATEGORIES,
+            )
+
+        return redirect(url_for("profile"))
+
+    # GET request - generate CSRF token and show the form
+    session["csrf_token"] = secrets.token_hex(16)
+    return render_template(
+        "expenses/add.html",
+        today=date.today().isoformat(),
+        categories=CATEGORIES,
+    )
 
 
 @app.route("/expenses/<int:id>/edit")

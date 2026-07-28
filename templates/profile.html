@@ -116,7 +116,10 @@
         </section>
 
         <section class="profile-breakdown">
-            <h2 class="breakdown-title">All Expenses</h2>
+            <div class="breakdown-header">
+                <h2 class="breakdown-title">All Expenses</h2>
+                <a href="{{ url_for('add_expense') }}" class="btn-add-expense">+ Add Expense</a>
+            </div>
             {% if expense_rows %}
             <table class="breakdown-table">
                 <thead>

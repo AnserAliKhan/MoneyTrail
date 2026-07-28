@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics - Spendly{% endblock %}
+
+{% block head %}
+<style>
+.coming-soon-section {
+    min-height: calc(100vh - 60px - 100px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+}
+
+.coming-soon-container {
+    text-align: center;
+    max-width: 560px;
+}
+
+.coming-soon-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 2rem;
+    background: var(--accent-light);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.05); opacity: 0.8; }
+}
+
+.coming-soon-icon svg {
+    width: 36px;
+    height: 36px;
+    color: var(--accent);
+}
+
+.coming-soon-badge {
+    display: inline-block;
+    background: var(--accent-light);
+    color: var(--accent);
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.coming-soon-title {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--ink);
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.coming-soon-title em {
+    font-style: italic;
+    color: var(--accent);
+}
+
+.coming-soon-description {
+    font-size: 1.05rem;
+    color: var(--ink-muted);
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+    max-width: 440px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.coming-soon-features {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+}
+
+.coming-soon-feature {
+    background: var(--paper-card);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: 1rem 1.25rem;
+    text-align: left;
+    min-width: 160px;
+}
+
+.coming-soon-feature-icon {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.coming-soon-feature-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--ink-soft);
+}
+
+.coming-soon-cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--accent);
+    color: var(--paper-card);
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.coming-soon-cta:hover {
+    background: var(--ink);
+}
+
+@media (max-width: 600px) {
+    .coming-soon-features {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .coming-soon-feature {
+        width: 100%;
+        max-width: 240px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="coming-soon-section">
+    <div class="coming-soon-container">
+        <div class="coming-soon-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" />
+            </svg>
+        </div>
+
+        <span class="coming-soon-badge">Coming Soon</span>
+
+        <h1 class="coming-soon-title">
+            <em>Analytics</em> Dashboard
+        </h1>
+
+        <p class="coming-soon-description">
+            Get powerful insights into your spending habits. Track trends,
+            compare months, and discover where your money goes with beautiful
+            charts and visualizations.
+        </p>
+
+        <div class="coming-soon-features">
+            <div class="coming-soon-feature">
+                <div class="coming-soon-feature-icon">📊</div>
+                <div class="coming-soon-feature-label">Spending Trends</div>
+            </div>
+            <div class="coming-soon-feature">
+                <div class="coming-soon-feature-icon">📈</div>
+                <div class="coming-soon-feature-label">Month Comparison</div>
+            </div>
+            <div class="coming-soon-feature">
+                <div class="coming-soon-feature-icon">🎯</div>
+                <div class="coming-soon-feature-label">Budget Goals</div>
+            </div>
+        </div>
+
+        <a href="{{ url_for('profile') }}" class="coming-soon-cta">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Back to Profile
+        </a>
+    </div>
+</section>
+{% endblock %}
