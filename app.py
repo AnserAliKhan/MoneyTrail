@@ -165,6 +165,12 @@ def dashboard():
     return render_template("dashboard.html", user_name=session.get("user_name"))
 
 
+@app.route("/analytics")
+@_login_required
+def analytics():
+    return render_template("analytics.html")
+
+
 # ------------------------------------------------------------------ #
 # Profile filter helpers                                                #
 # ------------------------------------------------------------------ #
