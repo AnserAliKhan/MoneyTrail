@@ -8,7 +8,7 @@ from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from database.db import CATEGORIES, get_db, init_db, seed_db
-from database.queries import insert_expense
+from database.queries import insert_expense, get_expense_by_id, update_expense
 
 app = Flask(__name__)
 
@@ -489,9 +489,105 @@ def add_expense():
     )
 
 
-@app.route("/expenses/<int:id>/edit")
+@app.route("/expenses/<int:id>/edit", methods=["GET", "POST"])
+@_login_required
 def edit_expense(id):
-    return "Edit expense — coming in Step 8"
+    """Edit an existing expense - GET shows form, POST processes submission."""
+    user_id = session["user_id"]
+
+    if request.method == "POST":
+        # Validate CSRF token
+        submitted_token = request.form.get("csrf_token")
+        stored_token = session.get("csrf_token")
+        if not submitted_token or submitted_token != stored_token:
+            return "CSRF token validation failed", 403
+
+        # Get and validate form data
+        amount_raw = (request.form.get("amount") or "").strip()
+        category = (request.form.get("category") or "").strip()
+        date_raw = (request.form.get("date") or "").strip()
+        description = (request.form.get("description") or "").strip()
+
+        errors = []
+
+        # Validate amount - must be a positive number
+        try:
+            amount = float(amount_raw)
+            if amount <= 0:
+                errors.append("Amount must be greater than zero.")
+        except ValueError:
+            errors.append("Please enter a valid amount.")
+
+        # Validate category - must be from the fixed list
+        if not category:
+            errors.append("Please select a category.")
+        elif category not in CATEGORIES:
+            errors.append("Invalid category selected.")
+
+        # Validate date - must be valid YYYY-MM-DD
+        expense_date = None
+        if not date_raw:
+            errors.append("Please select a date.")
+        else:
+            try:
+                expense_date = datetime.strptime(date_raw, "%Y-%m-%d").date()
+            except ValueError:
+                errors.append("Please enter a valid date in YYYY-MM-DD format.")
+
+        # If there are errors, re-render the form
+        if errors:
+            # Fetch the expense to pre-populate the form
+            expense = get_expense_by_id(id, user_id)
+            if expense is None:
+                return "Expense not found", 404
+            return render_template(
+                "expenses/edit.html",
+                error="; ".join(errors),
+                expense=expense,
+                amount=amount_raw,
+                category=category,
+                date=date_raw,
+                description=description,
+                categories=CATEGORIES,
+            )
+
+        # All valid - update the expense
+        try:
+            success = update_expense(
+                expense_id=id,
+                user_id=user_id,
+                amount=amount,
+                category=category,
+                date=expense_date.isoformat(),
+                description=description,
+            )
+            if not success:
+                return "Expense not found", 404
+        except Exception:
+            return render_template(
+                "expenses/edit.html",
+                error="Failed to update expense. Please try again.",
+                expense={"id": id, "amount": amount_raw, "category": category, "date": date_raw, "description": description},
+                amount=amount_raw,
+                category=category,
+                date=date_raw,
+                description=description,
+                categories=CATEGORIES,
+            )
+
+        return redirect(url_for("profile"))
+
+    # GET request - fetch the expense and show the form
+    expense = get_expense_by_id(id, user_id)
+    if expense is None:
+        return "Expense not found", 404
+
+    session["csrf_token"] = secrets.token_hex(16)
+    return render_template(
+        "expenses/edit.html",
+        expense=expense,
+        categories=CATEGORIES,
+    )
 
 
 @app.route("/expenses/<int:id>/delete")
