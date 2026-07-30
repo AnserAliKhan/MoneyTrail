@@ -1,3 +1,4 @@
+import os
 import secrets
 import sqlite3
 import sys
@@ -8,7 +9,7 @@ from flask import Flask, redirect, render_template, request, session, url_for
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from database.db import CATEGORIES, get_db, init_db, seed_db
-from database.queries import insert_expense, get_expense_by_id, update_expense
+from database.queries import delete_expense as db_delete_expense, get_expense_by_id, insert_expense, update_expense
 
 app = Flask(__name__)
 
@@ -590,10 +591,24 @@ def edit_expense(id):
     )
 
 
-@app.route("/expenses/<int:id>/delete")
+@app.route("/expenses/<int:id>/delete", methods=["POST"])
+@_login_required
 def delete_expense(id):
-    return "Delete expense — coming in Step 9"
+    """Delete an expense - POST confirms and performs the deletion."""
+    user_id = session["user_id"]
+
+    # Verify ownership - expense must exist and belong to the current user
+    expense = get_expense_by_id(id, user_id)
+    if expense is None:
+        return "Expense not found", 404
+
+    # Delete the expense
+    db_delete_expense(id, user_id)
+
+    # Redirect to profile after deletion
+    return redirect(url_for("profile"))
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(debug=True, host="0.0.0.0", port=port)

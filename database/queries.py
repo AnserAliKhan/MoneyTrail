@@ -53,6 +53,25 @@ def update_expense(expense_id: int, user_id: int, amount: float, category: str, 
     return cursor.rowcount > 0
 
 
+def delete_expense(expense_id: int, user_id: int) -> bool:
+    """Delete an expense, scoped to user_id for security.
+
+    Args:
+        expense_id: The ID of the expense to delete
+        user_id: The ID of the user who owns the expense
+
+    Returns:
+        True if the expense was deleted, False if no rows affected.
+    """
+    db = get_db()
+    cursor = db.execute(
+        "DELETE FROM expenses WHERE id = ? AND user_id = ?",
+        (expense_id, user_id),
+    )
+    db.commit()
+    return cursor.rowcount > 0
+
+
 def insert_expense(user_id: int, amount: float, category: str, date: str, description: str | None) -> int:
     """Insert a new expense and return its ID.
 
