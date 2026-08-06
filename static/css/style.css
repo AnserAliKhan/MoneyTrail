@@ -3,21 +3,21 @@
 /* ------------------------------------------------------------------ */
 
 :root {
-    --ink: #0f0f0f;
-    --ink-soft: #2d2d2d;
-    --ink-muted: #6b6b6b;
-    --ink-faint: #a0a0a0;
-    --paper: #f7f6f3;
-    --paper-warm: #f0ede6;
-    --paper-card: #ffffff;
-    --accent: #1a472a;
-    --accent-light: #e8f0eb;
-    --accent-2: #c17f24;
-    --accent-2-light: #fdf3e3;
-    --danger: #c0392b;
-    --danger-light: #fdecea;
-    --border: #e4e1da;
-    --border-soft: #eeebe4;
+    --ink: #1F2937;
+    --ink-soft: #374151;
+    --ink-muted: #6B7280;
+    --ink-faint: #9CA3AF;
+    --paper: #F9FAFB;
+    --paper-warm: #F3F4F6;
+    --paper-card: #FFFFFF;
+    --accent: #1E3A8A;
+    --accent-light: #DBEAFE;
+    --accent-2: #B8860B;
+    --accent-2-light: #FEF3C7;
+    --danger: #B91C1C;
+    --danger-light: #FEE2E2;
+    --border: #E5E7EB;
+    --border-soft: #F3F4F6;
 
     --font-display: 'DM Serif Display', Georgia, serif;
     --font-body: 'DM Sans', system-ui, sans-serif;
@@ -188,6 +188,29 @@ a { color: inherit; text-decoration: none; }
     align-items: center;
     justify-content: center;
     margin-bottom: 3.5rem;
+}
+
+/* Two-column split under the hero text: illustration left, mock right. */
+.hero-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: center;
+    width: 100%;
+}
+
+.hero-visual-left { width: 100%; }
+
+.hero-illustration {
+    display: block;
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius-lg);
+    box-shadow: 0 12px 40px rgba(31, 41, 55, 0.08);
+}
+
+@media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 2rem; }
 }
 
 /* ------------------------------------------------------------------ */

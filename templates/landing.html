@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Spendly — Track Every Rupee{% endblock %}
+{% block title %}MoneyTrail — Track Every Rupee{% endblock %}
 
 {% block head %}
 <style>
@@ -106,7 +106,7 @@
         </h1>
 
         <p class="hero-subtitle">
-            Spendly helps you log expenses, spot patterns, and stay
+            MoneyTrail helps you log expenses, spot patterns, and stay
             on budget — without the spreadsheet headache.
         </p>
 
@@ -116,49 +116,57 @@
         </div>
     </div>
 
-    <div class="hero-visual">
-        <div class="mock-window">
-            <div class="mock-window-header">
-                <span class="dot dot-red"></span>
-                <span class="dot dot-yellow"></span>
-                <span class="dot dot-green"></span>
-            </div>
+    <div class="hero-grid">
+        <div class="hero-visual-left">
+            <img src="{{ url_for('static', filename='img/hero.svg') }}"
+                 alt="Person analysing a financial growth chart"
+                 class="hero-illustration">
+        </div>
 
-            <div class="mock-stats">
-                <div class="stat-card">
-                    <div class="stat-label">This month</div>
-                    <div class="stat-value">₨18,240</div>
-                    <div class="stat-note up">+12% vs last</div>
+        <div class="hero-visual">
+            <div class="mock-window">
+                <div class="mock-window-header">
+                    <span class="dot dot-red"></span>
+                    <span class="dot dot-yellow"></span>
+                    <span class="dot dot-green"></span>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-label">Budget left</div>
-                    <div class="stat-value">₨6,760</div>
-                    <div class="stat-note ok">43% remaining</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Transactions</div>
-                    <div class="stat-value">34</div>
-                    <div class="stat-note muted">this month</div>
-                </div>
-            </div>
 
-            <div class="mock-bars">
-                <div class="bar-row">
-                    <span class="bar-label">Food</span>
-                    <div class="bar-track">
-                        <div class="bar-fill food" style="width: 75%"></div>
+                <div class="mock-stats">
+                    <div class="stat-card">
+                        <div class="stat-label">This month</div>
+                        <div class="stat-value">₨18,240</div>
+                        <div class="stat-note up">+12% vs last</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Budget left</div>
+                        <div class="stat-value">₨6,760</div>
+                        <div class="stat-note ok">43% remaining</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Transactions</div>
+                        <div class="stat-value">34</div>
+                        <div class="stat-note muted">this month</div>
                     </div>
                 </div>
-                <div class="bar-row">
-                    <span class="bar-label">Travel</span>
-                    <div class="bar-track">
-                        <div class="bar-fill travel" style="width: 55%"></div>
+
+                <div class="mock-bars">
+                    <div class="bar-row">
+                        <span class="bar-label">Food</span>
+                        <div class="bar-track">
+                            <div class="bar-fill food" style="width: 75%"></div>
+                        </div>
                     </div>
-                </div>
-                <div class="bar-row">
-                    <span class="bar-label">Bills</span>
-                    <div class="bar-track">
-                        <div class="bar-fill bills" style="width: 40%"></div>
+                    <div class="bar-row">
+                        <span class="bar-label">Travel</span>
+                        <div class="bar-track">
+                            <div class="bar-fill travel" style="width: 55%"></div>
+                        </div>
+                    </div>
+                    <div class="bar-row">
+                        <span class="bar-label">Bills</span>
+                        <div class="bar-track">
+                            <div class="bar-fill bills" style="width: 40%"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -189,13 +197,13 @@
 <section class="cta-section">
     <div class="cta-inner">
         <h2 class="cta-title">Ready to take control?</h2>
-        <p class="cta-body">Join thousands of people who track their expenses with Spendly.</p>
+        <p class="cta-body">Join thousands of people who track their expenses with MoneyTrail.</p>
         <a href="{{ url_for('register') }}" class="btn-primary">Create free account</a>
     </div>
 </section>
 
 <!-- Video modal — opened by "See how it works" -->
-<div class="video-modal" id="howItWorksModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="See how Spendly works">
+<div class="video-modal" id="howItWorksModal" aria-hidden="true" role="dialog" aria-modal="true" aria-label="See how MoneyTrail works">
     <div class="video-modal-dialog" role="document">
         <button type="button" class="video-modal-close" id="howItWorksClose" aria-label="Close video">×</button>
         <div class="video-modal-frame">
@@ -203,7 +211,7 @@
                 id="howItWorksFrame"
                 data-src="https://www.youtube.com/embed/dQw4w9WgXcQ"
                 src=""
-                title="See how Spendly works"
+                title="See how MoneyTrail works"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowfullscreen
                 loading="lazy"></iframe>
