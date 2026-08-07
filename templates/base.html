@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}MoneyTrail{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%233F5E3A'/%3E%3Cpath d='M9 11h7a3 3 0 0 1 0 6h-3v4h7' stroke='%23F8F4E8' stroke-width='2.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -15,7 +17,7 @@
     <nav class="navbar">
         <div class="nav-inner">
             <a href="{{ url_for('landing') }}" class="nav-brand">
-                <span class="brand-icon">◈</span>
+                <span class="brand-icon">M</span>
                 <span class="brand-name">MoneyTrail</span>
             </a>
             <div class="nav-links">
@@ -38,11 +40,44 @@
 
     <footer class="footer">
         <div class="footer-inner">
-            <span class="brand-icon">◈</span>
-            <span class="footer-name">MoneyTrail</span>
-            <p class="footer-copy">Track every rupee. Own your finances.</p>
-            <a href="{{ url_for('terms') }}">Terms and Conditions</a>
-            <a href="{{ url_for('privacy') }}">Privacy Policy</a>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="footer-brand-row">
+                        <span class="brand-icon">M</span>
+                        <span class="footer-name">MoneyTrail</span>
+                    </div>
+                    <p class="footer-copy">MoneyTrail is a serene, secure expense tracking dashboard designed to turn raw spend into clear, calm visual insights.</p>
+                </div>
+                <div class="footer-col">
+                    <h4 class="footer-heading">Product</h4>
+                    <a href="{{ url_for('landing') }}#features">Security Protocols</a>
+                    <a href="{{ url_for('landing') }}#pricing">Platform Integration</a>
+                    <a href="{{ url_for('landing') }}#features">Releases</a>
+                    <a href="{{ url_for('landing') }}#pricing">Custom Pricing</a>
+                </div>
+                <div class="footer-col">
+                    <h4 class="footer-heading">Guides</h4>
+                    <a href="{{ url_for('landing') }}#features">Cash Flow Analysis</a>
+                    <a href="{{ url_for('landing') }}#features">Behavioral Spending</a>
+                    <a href="{{ url_for('landing') }}#features">Community Case Studies</a>
+                </div>
+                <div class="footer-col">
+                    <h4 class="footer-heading">Company</h4>
+                    <a href="{{ url_for('landing') }}">Our Brand Identity</a>
+                    <a href="{{ url_for('landing') }}">Support Desk</a>
+                    <a href="{{ url_for('privacy') }}">Privacy Policy</a>
+                    <a href="{{ url_for('terms') }}">Terms of Use</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <span>© 2026 MoneyTrail Systems Inc. All rights reserved.</span>
+                <div class="footer-platforms">
+                    <span>X Platform</span>
+                    <span>Instagram</span>
+                    <span>Facebook</span>
+                    <span>LinkedIn</span>
+                </div>
+            </div>
         </div>
     </footer>
 
