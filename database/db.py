@@ -1,3 +1,4 @@
+
 # Database layer for Spendly.
 #
 # Exposes three helpers used by app.py on startup and by route handlers
